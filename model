@@ -1,0 +1,95 @@
+import tensorflow as tf
+import numpy as np
+
+OUTPUT_FILE = 'test_accuracy.txt'  
+
+def softmax(x):
+    e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    return e_x / np.sum(e_x, axis=-1, keepdims=True)
+
+def load_test_acc():
+    acc = 0
+    try:
+        with open(OUTPUT_FILE, 'r') as file:
+            line = file.readline()
+            acc = float(line.strip())
+    except Exception as e:
+        print("Error! ", e)
+    return acc
+
+def test_acc_80():
+    acc = load_test_acc()
+    assert acc >= 0.8
+
+def test_acc_82():
+    acc = load_test_acc()
+    assert acc >= 0.82
+
+def test_acc_84():
+    acc = load_test_acc()
+    assert acc >= 0.84
+
+def test_acc_86():
+    acc = load_test_acc()
+    assert acc >= 0.86
+
+def test_acc_88():
+    acc = load_test_acc()
+    assert acc >= 0.88
+
+def test_acc_90():
+    acc = load_test_acc()
+    assert acc >= 0.9
+
+def test_acc_91():
+    acc = load_test_acc()
+    assert acc >= 0.91
+
+def test_acc_92():
+    acc = load_test_acc()
+    assert acc >= 0.92
+
+def test_softmax():
+    x = np.array([2.0, 1.0, 0.1])
+    y = softmax(x)
+
+    print("Softmax output:", y)
+    print("Sum of outputs:", np.sum(y))  # Should be 1.0
+    assert np.all(y >= 0) and np.all(y <= 1), "Output not in [0,1]"
+    assert np.isclose(np.sum(y), 1.0), "Output does not sum to 1"
+
+
+fashion_mnist = tf.keras.datasets.fashion_mnist
+(x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
+
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+model = tf.keras.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+
+model.save('syam_model.h5')
+
+model = tf.keras.models.load_model('syam_model.h5')
+
+weights = model.get_weights()
+np.savez('syam_model.npz', *weights)
+
+with open('syam_model.json', 'w') as f:
+    f.write(model.to_json())
+
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
+with open(OUTPUT_FILE, 'w') as f:
+    f.write(str(test_acc))
+
+print(f"Training , save mode to syam_model.h5, syam_model.npz, syam_model.json")
+print(f"Test accuracy: {test_acc:.4f} disimpan di {OUTPUT_FILE}")
